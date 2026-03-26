@@ -15,11 +15,11 @@ class Problem:
     def get_basic_solution(self):
         Paths = {c: [(v, 1)] for c, v in self.Vs.items()}
 
-        path, _ = get_closest(G, self.Vs['a'], [self.Vs['f']])
+        path, _ = get_closest(self.G, self.Vs['a'], [self.Vs['f']])
         for v in path[1:]:
             Paths['a'].append((v, 1))
         
-        path, _ = get_closest(G, self.Vs['f'], [self.Vs['p']])
+        path, _ = get_closest(self.G, self.Vs['f'], [self.Vs['p']])
         for v in path[1:]:
             Paths['f'].append((v, 1))
         Paths['a'].extend(Paths['f'][1:])
@@ -27,7 +27,7 @@ class Problem:
         to_solve = set(self.S.keys())
         for _ in range(len(to_solve)):
             current = Paths['p'][-1][0]
-            path, _ = get_closest(G, current, to_solve)
+            path, _ = get_closest(self.G, current, to_solve)
             to_solve.remove(path[-1])
             for v in path[1:]:
                 Paths['p'].append((v, 1))
@@ -44,6 +44,9 @@ class Problem:
 class Solution:
     problem: Problem
     P: dict[str, list[list[tuple[int, int]]]]
+
+    def calculate_cost(self):
+        return 0
 
 
 def dijkstra(G: Graph, start: int):
