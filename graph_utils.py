@@ -32,7 +32,7 @@ def dijkstra(G: Graph, start: int):
     return dist, prev
 
 
-def get_closest(G: Graph, start: int, ends: Iterable[int]):
+def get_closest(G: Graph, start: int, ends: Iterable[int]) -> tuple[list[int], int]:
     dist, prev = dijkstra(G, start)
 
     closest = min(ends, key=lambda e: dist[e])
