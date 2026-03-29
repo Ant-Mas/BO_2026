@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from graph_utils import get_closest, Graph
 from queue import PriorityQueue
 
-# graph = list[dict[int, int]]
+# Graph = list[dict[int, int]]
 CARS = ['a', 'f', 'p']
 
 @dataclass
@@ -87,32 +87,48 @@ class Solution:
         return completion_times
 
 
-    def is_correct(self) -> bool:
+    def makes_sense(self) -> bool:
         for car in CARS:
             if len(self.paths[car]) != self.problem.car_amounts[car]:
                 return False
+            for path in self.paths[car]:
+                if path[0][0] != self.problem.starting_positions[car]:
+                    return False
+                for idx, (v, _) in enumerate(path[1:]):
+                    prev, _ = path[idx]
+                    if v not in self.problem.graph[prev].keys():
+                        return False
+        return True
+
+
+    def is_correct(self) -> bool:
         if self.cost_values.keys() != self.problem.situations.keys():
             return False
         return True
+    
+
+    def get_cost(self) -> int:
+        return sum(cost**2 for cost in self.cost_values.values())
+
                 
 
 def solve_flotilla(problem: Problem):
     paths = {'a': [(problem.starting_positions['a'], 0)]}
 
-    path, _ = get_closest(problem.graph, problem.starting_positions['a'], [problem.starting_positions['f']])
+    dij_path, _ = get_closest(problem.graph, problem.starting_positions['a'], [problem.starting_positions['f']])
     p_wait = 0
     f_wait = 0
-    for idx, current_v in enumerate(path[1:]):
-        prev_v = path[idx]
+    for idx, current_v in enumerate(dij_path[1:]):
+        prev_v = dij_path[idx]
         paths['a'].append((current_v, 1))
         f_wait += problem.graph[prev_v][current_v] + 1
         p_wait += problem.graph[prev_v][current_v] + 1
 
 
     paths['f'] = [(problem.starting_positions['f'], f_wait)]
-    path, _ = get_closest(problem.graph, problem.starting_positions['f'], [problem.starting_positions['p']])
-    for idx, current_v in enumerate(path[1:]):
-        prev_v = path[idx]
+    dij_path, _ = get_closest(problem.graph, problem.starting_positions['f'], [problem.starting_positions['p']])
+    for idx, current_v in enumerate(dij_path[1:]):
+        prev_v = dij_path[idx]
         paths['f'].append((current_v, 1))
         p_wait += problem.graph[prev_v][current_v] + 1
     paths['a'].extend(paths['f'][1:])
@@ -122,9 +138,9 @@ def solve_flotilla(problem: Problem):
     to_solve = set(problem.situations.keys())
     for _ in range(len(to_solve)):
         current = paths['p'][-1][0]
-        path, _ = get_closest(problem.graph, current, to_solve)
-        to_solve.remove(path[-1])
-        for v in path[1:]:
+        dij_path, _ = get_closest(problem.graph, current, to_solve)
+        to_solve.remove(dij_path[-1])
+        for v in dij_path[1:]:
             paths['p'].append((v, 1))
     paths['a'].extend(paths['p'][1:])
     paths['f'].extend(paths['p'][1:])
@@ -152,6 +168,7 @@ if __name__ == "__main__":
     #     print(type)
     #     for path in paths:
     #         print(path)
-
-    print(solution.calculate_cost_function(verbose=True))
-    print(solution.is_correct())
+    print(f"{solution.makes_sense() = }")
+    print(f"cost_values = {solution.calculate_cost_function(verbose=True)}")
+    print(f"{solution.is_correct() = }")
+    print(f"{solution.get_cost() = }")
