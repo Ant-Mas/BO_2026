@@ -6,7 +6,7 @@ from itertools import combinations
 
 Graph = list[dict[int, int]]
 
-def dijkstra(G: Graph, start: int):
+def dijkstra(G: Graph, start: int) -> tuple[list[int], list[int | None]]:
     n = len(G)
 
     dist = [inf] * n
@@ -40,9 +40,9 @@ def get_closest(G: Graph, start: int, ends: Iterable[int]) -> tuple[list[int], i
     closest = min(ends, key=lambda e: dist[e])
     closest_dist = dist[closest]
     if closest_dist == inf:
-        return None, inf
+        raise RuntimeError("No path from start to any of the ends")
 
-    path = []
+    path: list[int] = []
     node = closest
     while node is not None:
         path.append(node)
@@ -51,7 +51,8 @@ def get_closest(G: Graph, start: int, ends: Iterable[int]) -> tuple[list[int], i
 
     return path, dist[closest]
 
-def generate_random_graph(num_vertices: int,num_edges: int,min_weight: int,max_weight: int) -> Graph:
+
+def generate_random_graph(num_vertices: int, num_edges: int, min_weight: int, max_weight: int) -> Graph:
     if num_vertices < 1:
         raise ValueError("Number of vertices must be at least 1")
 
