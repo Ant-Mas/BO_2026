@@ -1,8 +1,8 @@
 from dataclasses import dataclass, asdict
-from graph_utils import get_closest, Graph, dijkstra
+from graph_utils import get_closest, Graph, dijkstra, generate_random_graph
 import json
 from queue import PriorityQueue
-from random import shuffle, seed
+import random
 from math import inf
 
 # Graph = list[dict[int, int]]
@@ -30,6 +30,39 @@ def load_problem(filename: str) -> Problem:
     data["situations"] = {int(k): set(v) for k, v in data["situations"].items()}
     data["graph"] = [{int(k): int(v) for k, v in dict.items()} for dict in data["graph"]]
     return Problem(**data)
+
+
+def generate_random_problem(num_vertices: int,num_edges: int,min_weight: int,max_weight: int, num_situations: int, min_car_amount:int, max_car_amount:int, seed=2137) -> Problem:
+    if num_vertices < num_situations:
+        raise ValueError("Number of situations must be less than or equal to num of vertices")
+    
+
+    random.seed(seed)
+    graph = generate_random_graph(num_vertices, num_edges, min_weight, max_weight)
+
+    situations = dict()
+    vertices = list(range(num_vertices))
+    random.shuffle(vertices)
+    def num_to_cars(n):
+        cars = []
+        pos = 0
+        while n:
+            if n & 1: cars.append(CARS[pos])
+            n >>= 1
+            pos += 1
+        return cars
+    for i in range(num_situations):
+        random_cars = num_to_cars(random.randint(1, 7))
+        situations[vertices[i]] = random_cars
+
+    car_amounts = dict()
+    for car in CARS:
+        car_amounts[car] = random.randint(min_car_amount, max_car_amount)
+
+    starting_positions = {car:random.randint(0, num_vertices-1) for car in CARS}
+
+    return Problem(graph, situations, car_amounts, starting_positions)
+    
 
 
 @dataclass
@@ -172,10 +205,10 @@ def solve_flotilla(problem: Problem):
         {car: [paths[car] for _ in range(problem.car_amounts[car])] for car in CARS}
     )
 
-def solve_random_order(problem: Problem, seed_int = 2137):
-    seed(seed_int)
+def solve_random_order(problem: Problem, seed = 2137):
+    random.seed(seed)
     order = [k for k in problem.situations.keys()]
-    shuffle(order)
+    random.shuffle(order)
 
     cars_a = [(problem.starting_positions['a'], 0, [(problem.starting_positions['a'], 0)]) for _ in range(problem.car_amounts['a'])]
     cars_f = [(problem.starting_positions['f'], 0, [(problem.starting_positions['f'], 0)]) for _ in range(problem.car_amounts['f'])]
@@ -209,8 +242,8 @@ def solve_random_order(problem: Problem, seed_int = 2137):
         for type in needed:
             path = []
             car = cars[type][fastest_id[type]]
-            if car[1] == situation:
-                car[2][-1] = (car[2][-1][0], total_time - car[1])
+            if car[0] == situation:
+                car[2][-1] = (car[2][-1][0], total_time - car[1] + car[2][-1][1])
                 cars[type][fastest_id[type]] = (situation, total_time, car[2])
                 continue
 
@@ -242,12 +275,13 @@ if __name__ == "__main__":
         G[v][u] = dist
     S = {3: {'a', 'f'}, 2: {'a', 'f', 'p'}, 1:{'p'}}
     N = {"a": 1, "f": 1, "p": 1}
-    Vs = {"a": 0, "f": 2, "p": 1}
+    Vs = {"a": 0, "f": 3, "p": 1}
 
-    problem = Problem(G, S, N, Vs)
+    # problem = Problem(G, S, N, Vs)
     # problem.save_problem('test.json')
     # problem = load_problem('test.json')
-    # print(problem)
+    problem = generate_random_problem(50, 200, 1, 10, 15, 2, 4)
+    print(problem)
 
 
     # solution = solve_flotilla(problem)
