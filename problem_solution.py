@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from graph_utils import get_closest, Graph
+import json
 from queue import PriorityQueue
 
 # Graph = list[dict[int, int]]
@@ -11,6 +12,21 @@ class Problem:
     situations: dict[int, set[str]]
     car_amounts: dict[str, int]
     starting_positions: dict[str, int]
+
+    def save_problem(this, filename: str) -> None:
+        data = asdict(this)
+        data["situations"] = {k: list(v) for k, v in data["situations"].items()}
+        with open(filename, "w") as f:
+            json.dump(data, f)
+
+
+def load_problem(filename: str) -> Problem:
+    with open(filename, "r") as f:
+        data = json.load(f)
+    
+    data["situations"] = {int(k): set(v) for k, v in data["situations"].items()}
+    data["graph"] = [{int(k): int(v) for k, v in dict.items()} for dict in data["graph"]]
+    return Problem(**data)
 
 
 @dataclass
@@ -163,6 +179,11 @@ if __name__ == "__main__":
     Vs = {"a": 0, "f": 1, "p": 2}
 
     problem = Problem(G, S, N, Vs)
+    # problem.save_problem('test.json')
+    # problem = load_problem('test.json')
+    # print(problem)
+
+
     solution = solve_flotilla(problem)
     # for type, paths in solution.paths.items():
     #     print(type)
