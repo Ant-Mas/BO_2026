@@ -48,14 +48,13 @@ def solve_random_order(problem: Problem, seed = 2137):
     random.seed(seed)
     order = [k for k in problem.situations.keys()]
     random.shuffle(order)
+    return solve_given_order(problem, order)
 
+def solve_given_order(problem: Problem, order:list[int]) -> Solution:
     cars_a = [(problem.starting_positions['a'], 0, [(problem.starting_positions['a'], 0)]) for _ in range(problem.car_amounts['a'])]
     cars_f = [(problem.starting_positions['f'], 0, [(problem.starting_positions['f'], 0)]) for _ in range(problem.car_amounts['f'])]
     cars_p = [(problem.starting_positions['p'], 0, [(problem.starting_positions['p'], 0)]) for _ in range(problem.car_amounts['p'])]
 
-    # cars_a = [(problem.starting_positions['a'], 0, []) for _ in range(problem.car_amounts['a'])]
-    # cars_f = [(problem.starting_positions['f'], 0, []) for _ in range(problem.car_amounts['f'])]
-    # cars_p = [(problem.starting_positions['p'], 0, []) for _ in range(problem.car_amounts['p'])]
     cars = {
         'a': cars_a,
         'f': cars_f,
@@ -99,7 +98,6 @@ def solve_random_order(problem: Problem, seed = 2137):
         result_paths[type] = []
         for i in range(len(cars[type])):
             result_paths[type].append(cars[type][i][2])
-            # cars[type][i] = cars[type][i][2]
 
     return Solution(problem, result_paths)#cars)
 
