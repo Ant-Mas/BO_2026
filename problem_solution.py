@@ -69,6 +69,7 @@ class Problem:
         with open(filename, "w") as f:
             json.dump(data, f)
 
+
     @staticmethod
     def load(filename: str) -> "Problem":
         with open(filename, "r") as f:
@@ -78,8 +79,9 @@ class Problem:
         data["graph"] = [{int(k): int(v) for k, v in dict.items()} for dict in data["graph"]]
         return Problem(**data)
 
+
     @staticmethod
-    def random(num_vertices: int,num_edges: int,min_weight: int,max_weight: int, num_situations: int, min_car_amount: int, max_car_amount: int, seed=2137) -> "Problem":
+    def random(num_vertices: int, num_edges: int, min_weight: int, max_weight: int, num_situations: int, min_car_amount: int, max_car_amount: int, seed=2137) -> "Problem":
         if num_vertices < num_situations:
             raise ValueError("Number of situations must be less than or equal to num of vertices")
         
