@@ -21,16 +21,16 @@ class GeneticSolver:
 
 
     def mutate(self, solution: list[int]):
-        return self.mutate_swap(solution)
+        return self._mutate_swap(solution)
 
 
-    def mutate_swap(self, solution: list[int]):
+    def _mutate_swap(self, solution: list[int]):
         i, j = random.sample(range(len(solution)), 2)
         solution[i], solution[j] = solution[j], solution[i]
         return solution
     
     
-    def mutate_reinsert(self, solution:list[int]):
+    def _mutate_reinsert(self, solution:list[int]):
         index = random.randint(0, len(solution) - 1)
         vertice = solution.pop(index)
         solution.insert(random.randint(0, len(solution) - 1), vertice)
@@ -44,10 +44,8 @@ class GeneticSolver:
 
         i, j = sorted(random.sample(range(size), 2))
 
-        # Copy slice from parent1
         child[i:j] = parent_a[i:j]
 
-        # Fill remaining from parent2
         p2_idx = 0
         for k in range(size):
             if child[k] is None:
@@ -61,6 +59,7 @@ class GeneticSolver:
     def evolve(self, generations: int, verbose: bool = False) -> Solution:
         self.create_initial_population()
         costs = [inf] * self.population_size
+        elitism = (len(self.population) + 9) // 10
         
         for gen in range(generations):
             for i, sol in enumerate(self.population):
@@ -73,14 +72,12 @@ class GeneticSolver:
 
             best_cost = sorted_pop[0][0]
             avg_cost = sum(cost for cost, sol in sorted_pop) / self.population_size
-            print(f"Generation {gen}: {best_cost = }, {avg_cost = }")
+            print(f"Generation {gen+1}: {best_cost = }, {avg_cost = }")
 
-            elitism = (len(self.population) + 9) // 10
             new_population = self.population[:elitism]
 
-
             while len(new_population) < self.population_size:
-                parent_a, parent_b = random.choices(self.population[:elitism*3], k=2)
+                parent_a, parent_b = random.sample(self.population[:elitism*3], k=2)
                 child = self.crossover(parent_a, parent_b)
                 
                 if random.random() < self.mutation_rate:
@@ -94,11 +91,11 @@ class GeneticSolver:
     
 
 def main():
-    problem = Problem.random(60, 100, 1, 10, 30, 3, 5, seed=2137)
+    problem = Problem.random(100, 99, 1, 10, 30, 2, 2, seed=213)
     print(f"{problem.check_validity(True) = }")
 
-    solver = GeneticSolver(problem, population_size=50, mutation_rate=0.3)
-    solution = solver.evolve(generations=100, verbose=True)
+    solver = GeneticSolver(problem, population_size=100, mutation_rate=0.4)
+    solution = solver.evolve(generations=50, verbose=True)
 
     # print(f"{solution.makes_sense(verbose=True) = }")
     # solution.calculate_cost_function(verbose=False)
