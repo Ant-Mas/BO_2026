@@ -85,10 +85,19 @@ class Problem:
         if num_vertices < num_situations:
             raise ValueError("Number of situations must be less than or equal to num of vertices")
         
-
         random.seed(seed)
         graph = generate_random_graph(num_vertices, num_edges, min_weight, max_weight)
 
+        return Problem.random_given_graph(graph, num_situations, min_car_amount, max_car_amount, seed)
+    
+
+    @staticmethod
+    def random_given_graph(graph: Graph, num_situations: int, min_car_amount: int, max_car_amount: int, seed=2137) -> "Problem":
+        num_vertices = len(graph)
+        if num_vertices < num_situations:
+            raise ValueError("Number of situations must be less than or equal to num of vertices")
+        
+        random.seed(seed)
         situations = dict()
         vertices = list(range(num_vertices))
         random.shuffle(vertices)

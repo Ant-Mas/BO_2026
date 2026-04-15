@@ -94,3 +94,32 @@ def generate_random_graph(num_vertices: int, num_edges: int, min_weight: int, ma
         graph[v][u] = weight
 
     return graph
+
+
+def generate_grid_graph(side: int, min_weight: int, max_weight: int) -> Graph:
+    n = side * side
+    graph: Graph = [{} for _ in range(n)]
+    
+    def node_id(r: int, c: int) -> int:
+        return r * side + c
+    
+    for r in range(side):
+        for c in range(side):
+            u = node_id(r, c)
+            
+            # Connect to the right neighbor
+            if c + 1 < side:
+                v = node_id(r, c + 1)
+                w = random.randint(min_weight, max_weight)
+                graph[u][v] = w
+                graph[v][u] = w  
+            
+            # Connect to the bottom neighbor
+            if r + 1 < side:
+                v = node_id(r + 1, c)
+                w = random.randint(min_weight, max_weight)
+                graph[u][v] = w
+                graph[v][u] = w 
+    
+    return graph
+

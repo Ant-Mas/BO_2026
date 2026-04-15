@@ -98,7 +98,7 @@ class GeneticSolver:
             avg_cost = sum(cost for cost, sol in sorted_pop) / self.population_size
             print(f"Generation {gen+1}: {best_cost = }, {avg_cost = }")
             if history is not None:
-                history.append((best_cost, avg_cost, self.population[0]))
+                history.append((best_cost, avg_cost, solve_given_order(self.problem,  self.population[0])))
 
             new_population = self.population[:elitism]
 

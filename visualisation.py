@@ -1,6 +1,8 @@
-from problem_solution import Solution, Problem
+from problem_solution import Solution, Problem, CARS
 import matplotlib.pyplot as plt
 from genetic_new_hope import GeneticSolver
+from graph_utils import generate_random_graph, generate_grid_graph
+import itertools
 
 
 def show_costs(history: list[tuple[int, float, Solution]]):
@@ -16,15 +18,70 @@ def show_costs(history: list[tuple[int, float, Solution]]):
 
     plt.show()
 
+import networkx as nx
+import matplotlib.pyplot as plt
+
+Graph = list[dict[int, int]]
+
+def show_graph(graph: Graph, paths: list[list[int]] | None = None, grid:bool = False) -> None:
+    G = nx.Graph()
+
+    def _grid_layout(side: int):
+        return { r * side + c: (c, -r) for r in range(side) for c in range(side) }
+    
+    for u, neighbors in enumerate(graph):
+        for v, weight in neighbors.items():
+            if u < v:
+                G.add_edge(u, v, weight=weight, inv_weight=1 / weight)
+    
+    if grid:
+        pos = _grid_layout(int(len(graph) ** 0.5))
+    else:
+        pos = nx.spring_layout(G, weight="inv_weight", seed=42)
+    
+    nx.draw(G, pos, with_labels=True, node_size=500, font_size=8)
+    
+    edge_labels = nx.get_edge_attributes(G, "weight")
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
+
+    if paths:
+        colors = itertools.cycle(["red", "blue", "green", "orange", "purple", "cyan", "magenta"])
+        
+        for path, color in zip(paths, colors):
+            # Convert node path → edge list
+            path_edges = list(zip(path, path[1:]))
+            
+            nx.draw_networkx_edges(
+                G,
+                pos,
+                edgelist=path_edges,
+                edge_color=color,
+                width=3
+            )
+    
+    plt.show()
+
 
 if __name__ == "__main__":
-    problem = Problem.random(30, 100, 1, 10, 20, 2, 5, seed=213)
+    graph = generate_grid_graph(5, 1, 6) 
+    
+    problem = Problem.random_given_graph(graph, 10, 1, 1, seed=213)
     print(f"{problem.check_validity(True) = }")
     history = []
 
-    solver = GeneticSolver(problem, population_size=30, mutation_rate=0.5)
-    solution = solver.evolve(generations=100, verbose=True, history=history)
+    solver = GeneticSolver(problem, population_size=10, mutation_rate=0.5)
+    solution = solver.evolve(generations=20, verbose=True, history=history)
 
-    show_costs(history)
+    # show_costs(history)
+
+    paths = []
+    for car in CARS:
+        for p in history[-1][2].paths[car]:
+            paths.append([v for v, w in p])
+
+    print(history[-1][2])
+    show_graph(graph, paths,  grid=True)
+
+
 
 
