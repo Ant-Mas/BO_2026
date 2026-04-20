@@ -16,6 +16,15 @@ class Problem:
     starting_positions: dict[str, int]
 
     def check_validity(self, verbose: bool = False) -> bool:
+        """
+        Check whether the problem meets basic requirements
+
+        :param verbose: If true prints the cause if invalid
+        :type verbose: bool
+
+        :returns: Whether the problem is valid
+        :rtype: bool
+        """
         for v, cars in self.situations.items():
             if v >= len(self.graph):
                 if verbose:
@@ -64,6 +73,7 @@ class Problem:
 
 
     def save(self, filename: str) -> None:
+        """Save a problem to a file with given name"""
         data = asdict(self)
         data["situations"] = {k: list(v) for k, v in data["situations"].items()}
         with open(filename, "w") as f:
@@ -72,6 +82,7 @@ class Problem:
 
     @staticmethod
     def load(filename: str) -> "Problem":
+        """Load a problem from a file with given name"""
         with open(filename, "r") as f:
             data = json.load(f)
         
@@ -82,6 +93,15 @@ class Problem:
 
     @staticmethod
     def random(num_vertices: int, num_edges: int, min_weight: int, max_weight: int, num_situations: int, min_car_amount: int, max_car_amount: int, seed=2137) -> "Problem":
+        """
+        Generates a random Problem instance:
+        - Creates a fully random weighted graph (use random_given_graph for better control)
+        - Selects random vertices as situations with a random subset of cars needed
+        - Selects a random value from given range for each car type amount
+
+        :returns: Generated problem
+        :rtype: Problem
+        """
         if num_vertices < num_situations:
             raise ValueError("Number of situations must be less than or equal to num of vertices")
         
@@ -93,6 +113,14 @@ class Problem:
 
     @staticmethod
     def random_given_graph(graph: Graph, num_situations: int, min_car_amount: int, max_car_amount: int, seed=2137) -> "Problem":
+        """
+        Generates a random Problem instance:
+        - Selects random vertices as situations with a random subset of cars needed
+        - Selects a random value from given range for each car type amount
+
+        :returns: Generated problem
+        :rtype: Problem
+        """
         num_vertices = len(graph)
         if num_vertices < num_situations:
             raise ValueError("Number of situations must be less than or equal to num of vertices")
@@ -147,6 +175,13 @@ class Solution:
         
 
     def calculate_cost_function(self, verbose = False) -> dict[int, int]:
+        """
+        Calculate the cost function for each situation both returning it and setting the object parameter, 
+        call before get_cost.
+
+        :returns: Mapping of index of situation to its cost
+        :rtype: dict[int, int]
+        """
         graph = self.problem.graph
         inhabitants: list[dict[str, int]] = [{car:0 for car in CARS} for _ in graph]
         completion_times: dict[int, int] = dict()
@@ -198,6 +233,18 @@ class Solution:
 
 
     def makes_sense(self, verbose = False) -> bool:
+        """
+        Check whether solution fulfills basic requirements:
+        - There is a path for each car
+        - Each car starts in the right position
+        - Each path is a path
+
+        :param verbose: If true prints which requirement is not fulfilled
+        :type verbose: bool
+
+        :returns: If solution makes sense
+        :rtype: bool
+        """
         for car in CARS:
             if len(self.paths[car]) != self.problem.car_amounts[car]:
                 if verbose: print(f'Given: {self.paths[car]} paths of type <{car}> expected: {self.problem.car_amounts[car]}')
@@ -215,14 +262,25 @@ class Solution:
 
 
     def is_correct(self) -> bool:
+        """
+        Check and return whether solution resolves each situation
+        Needs calculate_cost_function called first
+        """
         if self.cost_values is None:
-            raise RuntimeError("Cost values not calculated yet")
+            raise RuntimeError("Cost values not calculated yet, call calculate_cost_function() first")
         if self.cost_values.keys() != self.problem.situations.keys():
             return False
         return True
     
 
     def get_cost(self) -> int:
+        """
+        Calculate the total cost as a sum of squares of all costs
+        Needs calculate_cost_function called first
+
+        :returns: Total cost of solution
+        :rtype: int
+        """
         if self.cost_values is None:
-            raise RuntimeError("Cost values not calculated yet")
+            raise RuntimeError("Cost values not calculated yet, call calculate_cost_function() first")
         return sum(cost**2 for cost in self.cost_values.values())

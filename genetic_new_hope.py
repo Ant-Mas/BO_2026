@@ -10,6 +10,7 @@ class GeneticSolver:
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.population: list[list[int]] = []
+        self.history: list[tuple[int, float, Solution]] = []
 
 
     def create_initial_population(self):
@@ -80,7 +81,20 @@ class GeneticSolver:
         return child
 
 
-    def evolve(self, generations: int, verbose: bool = False, history: list[tuple[int, float, Solution]] = None) -> Solution:
+    def evolve(self, generations: int, save_history: bool = False, verbose: bool = False) -> Solution:
+        """
+        Run the genetic evolution for this genetic solver
+
+        :param generations: For how many generations the solver will run
+        :type generation: int
+        :param save_history: If true saves best, avg cost and best solution to history parameter in each generation
+        :type save_history: bool
+        :param verbose: If true prints best and avg cost for each generation
+        :type verbose: bool
+
+        :returns: The best found solution
+        :rtype: Solution
+        """
         self.create_initial_population()
         costs = [inf] * self.population_size
         elitism = (len(self.population) + 9) // 10
@@ -96,9 +110,9 @@ class GeneticSolver:
 
             best_cost = sorted_pop[0][0]
             avg_cost = sum(cost for cost, sol in sorted_pop) / self.population_size
-            print(f"Generation {gen+1}: {best_cost = }, {avg_cost = }")
-            if history is not None:
-                history.append((best_cost, avg_cost, solve_given_order(self.problem,  self.population[0])))
+            if verbose: print(f"Generation {gen+1}: {best_cost = }, {avg_cost = }")
+            if save_history:
+                self.history.append((best_cost, avg_cost, solve_given_order(self.problem,  self.population[0])))
 
             new_population = self.population[:elitism]
 
@@ -129,6 +143,28 @@ def main():
     print(f"{solution.is_correct() = }")
     print(f"{solution.get_cost() = }")
 
+def man_made_horrors():
+    graph = [{2:30, 3:30}, {4:30, 5:30}, {0:30, 6:6, 7:9}, {0:30, 6:7, 7:21}, {1:30, 6:6, 7:8}, {1:30, 6:23, 7:9}, {2:6,3:7,4:6,5:23}, {2:9,3:21,4:8,5:9}]
+    problem = Problem(graph, {2:set('p'), 3:set('p'), 4:set('a'), 5:set('a'), 6:set(('a', 'p')), 7:set(('a', 'p'))}, {'a':2, 'p':2, 'f':1}, {'a':1, 'p':0, 'f':1})
+    man_made_solution = Solution(problem, {'a':[[(1, 0), (4, 1), (6, 30)], [(1, 0), (5, 1), (7, 30)]], 'p':[[(0, 0), (2, 1), (7, 30)], [(0, 0), (3, 1), (6, 30)]], 'f':[[(1,0)]]})
+
+    solver = GeneticSolver(problem, population_size=20, mutation_rate=0.25)
+    solution = solver.evolve(generations=40, verbose=False)
+
+    print(f"{solution.makes_sense(verbose=True) = }")
+    solution.calculate_cost_function(verbose=True)
+    print(f"{solution.cost_values = }")
+    print(f"{solution.is_correct() = }")
+    print(f"{solution.get_cost() = }")
+
+    # print(f"{man_made_solution.makes_sense(verbose=True) = }")
+    # man_made_solution.calculate_cost_function(verbose=True)
+    # print(f"{man_made_solution.cost_values = }")
+    # print(f"{man_made_solution.is_correct() = }")
+    # print(f"{man_made_solution.get_cost() = }")
+
+
 
 if __name__ == "__main__":
-    main()
+    man_made_horrors()
+    # main()

@@ -67,12 +67,13 @@ if __name__ == "__main__":
     
     problem = Problem.random_given_graph(graph, 10, 1, 1, seed=213)
     print(f"{problem.check_validity(True) = }")
-    history = []
+  
 
     solver = GeneticSolver(problem, population_size=10, mutation_rate=0.5)
-    solution = solver.evolve(generations=20, verbose=True, history=history)
+    solution = solver.evolve(generations=20, verbose=True, save_history=True)
 
-    # show_costs(history)
+    history = solver.history
+    show_costs(history)
 
     paths = []
     for car in CARS:
