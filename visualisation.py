@@ -1,8 +1,10 @@
+from bee_solver import BeeSolver
 from problem_solution import Solution, Problem, CARS
 import matplotlib.pyplot as plt
 from genetic_new_hope import GeneticSolver
-from graph_utils import generate_random_graph, generate_grid_graph
+from graph_utils import generate_grid_graph
 import itertools
+import networkx as nx
 
 
 def show_costs(history: list[tuple[int, float, Solution]]):
@@ -18,8 +20,6 @@ def show_costs(history: list[tuple[int, float, Solution]]):
 
     plt.show()
 
-import networkx as nx
-import matplotlib.pyplot as plt
 
 Graph = list[dict[int, int]]
 
@@ -62,12 +62,11 @@ def show_graph(graph: Graph, paths: list[list[int]] | None = None, grid:bool = F
     plt.show()
 
 
-if __name__ == "__main__":
-    graph = generate_grid_graph(5, 1, 6) 
-    
+def vis_genetic():
+    graph = generate_grid_graph(5, 1, 6)
+
     problem = Problem.random_given_graph(graph, 10, 1, 1, seed=213)
     print(f"{problem.check_validity(True) = }")
-  
 
     solver = GeneticSolver(problem, population_size=10, mutation_rate=0.5)
     solution = solver.evolve(generations=20, verbose=True, save_history=True)
@@ -81,8 +80,30 @@ if __name__ == "__main__":
             paths.append([v for v, w in p])
 
     print(history[-1][2])
-    show_graph(graph, paths,  grid=True)
+    show_graph(graph, paths, grid=True)
 
 
+def vis_bee():
+    graph = generate_grid_graph(5, 1, 6)
+
+    problem = Problem.random_given_graph(graph, 10, 1, 1, seed=213)
+    print(f"{problem.check_validity(True) = }")
+
+    solver = BeeSolver(problem, bees_cnt=20, good_elite_cnt=8, elite_cnt=3, local_elite_cnt=10, local_good_cnt=4)
+    solution = solver.evolve(iterations=20, verbose=True)
+
+    history = solver.history
+    show_costs(history)
+
+    paths = []
+    for car in CARS:
+        for p in history[-1][2].paths[car]:
+            paths.append([v for v, w in p])
+
+    print(history[-1][2])
+    show_graph(graph, paths, grid=True)
 
 
+if __name__ == "__main__":
+    vis_genetic()
+    vis_bee()
