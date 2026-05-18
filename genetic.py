@@ -1,10 +1,13 @@
 import copy
 from problem_solution import Solution, Problem, CARS
+import warnings
 import random
 from solving import solve_flotilla
 
 class GeneticSolver:
     def __init__(self, problem: Problem, population_size: int = 20, mutation_rate: float = 0.2):
+        warnings.warn("This solver is deprecated, use the one from genetic new hope")
+
         self.problem = problem
         self.population_size = population_size
         self.mutation_rate = mutation_rate
@@ -96,7 +99,7 @@ def main():
     print(f"{problem.check_validity(True) = }")
 
     solver = GeneticSolver(problem, population_size=100, mutation_rate=1.0)
-    solution = solver.evolve(generations=200, verbose=True)
+    solution = solver.evolve(generations=3, verbose=True)
 
     print(f"{solution.makes_sense(verbose=True) = }")
     solution.calculate_cost_function(verbose=False)
