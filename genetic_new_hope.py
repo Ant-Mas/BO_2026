@@ -5,10 +5,13 @@ from solving import solve_given_order
 from math import inf
 
 class GeneticSolver:
-    def __init__(self, problem: Problem, population_size: int = 20, mutation_rate: float = 0.2):
+    def __init__(self, problem: Problem, population_size: int = 50, mutation_rate: float = 0.5, elitism: int | None = None, mutate_mode: str = "swap", crossover_mode: str = "keep_splice"):
         self.problem = problem
         self.population_size = population_size
         self.mutation_rate = mutation_rate
+        self.elitism = elitism
+        self.mutate_mode = mutate_mode
+        self.crossover_mode = crossover_mode
         self.population: list[list[int]] = []
         self.history: list[tuple[int, float, Solution]] = []
 
@@ -22,7 +25,11 @@ class GeneticSolver:
 
 
     def mutate(self, solution: list[int]):
-        return self._mutate_swap(solution)
+        match self.mutate_mode:
+            case "swap":
+                return self._mutate_swap(solution)
+            case "reinsert":
+                return self._mutate_reinsert(solution)
 
 
     def _mutate_swap(self, solution: list[int]):
@@ -39,12 +46,14 @@ class GeneticSolver:
 
 
     def crossover(self, parent_a: list[int], parent_b: list[int]) -> list[int]:
-        """Combines paths from two parents to create a child."""
-        return self._crossover_keep_splice(parent_a, parent_b)
+        match self.crossover_mode:
+            case "keep_splice":
+                return self._crossover_keep_splice(parent_a, parent_b)
+            case "swap_order":
+                return self._crossover_swap_order(parent_a, parent_b)
 
 
     def _crossover_keep_splice(self, parent_a: list[int], parent_b: list[int]) -> list[int]:
-        """Combines paths from two parents to create a child."""
         size = len(parent_a)
         child = [None] * size
 
@@ -63,7 +72,6 @@ class GeneticSolver:
     
 
     def _crossover_swap_order(self, parent_a: list[int], parent_b: list[int]) -> list[int]:
-        """Combines paths from two parents to create a child."""
         size = len(parent_a)
         child = copy.deepcopy(parent_a)
 
@@ -81,7 +89,7 @@ class GeneticSolver:
         return child
 
 
-    def evolve(self, generations: int, save_history: bool = False, verbose: bool = False) -> Solution:
+    def evolve(self, generations: int, save_history: bool = True, verbose: bool = False) -> Solution:
         """
         Run the genetic evolution for this genetic solver
 
@@ -97,7 +105,8 @@ class GeneticSolver:
         """
         self.create_initial_population()
         costs = [inf] * self.population_size
-        elitism = (len(self.population) + 9) // 10
+        if self.elitism is None:
+            self.elitism = (len(self.population) + 9) // 10
         
         for gen in range(generations):
             for i, sol in enumerate(self.population):
@@ -114,10 +123,10 @@ class GeneticSolver:
             if save_history:
                 self.history.append((best_cost, avg_cost, solve_given_order(self.problem,  self.population[0])))
 
-            new_population = self.population[:elitism]
+            new_population = self.population[:self.elitism]
 
             while len(new_population) < self.population_size:
-                parent_a, parent_b = random.sample(self.population[:elitism*3], k=2)
+                parent_a, parent_b = random.sample(self.population[:min(self.population_size, self.elitism*3)], k=2)
                 child = self.crossover(parent_a, parent_b)
                 
                 if random.random() < self.mutation_rate:
@@ -128,6 +137,11 @@ class GeneticSolver:
             self.population = new_population
 
         return solve_given_order(self.problem, self.population[0])
+    
+
+    def reset(self):
+        self.population = []
+        self.history = []
     
 
 def main():
