@@ -48,15 +48,30 @@ class BeeSolver:
         solution.calculate_cost_function()
         return solution.get_cost()
 
-    def evolve(self, iterations: int, verbose: bool = False) -> Solution:
+    def evolve(self, iterations: int, initial_population: list[list[int]] | None = None, verbose: bool = False) -> Solution:
         # Inicjalizacja populacji
         keys = list(self.problem.situations.keys())
         population = []
-        for _ in range(self.bees_cnt):
-            order = copy.copy(keys)
-            random.shuffle(order)
-            cost = self._evaluate_cost(order)
-            population.append({"order": order, "cost": cost})
+        if initial_population is not None:
+            for order in initial_population:
+                order_copy = copy.copy(order)
+                cost = self._evaluate_cost(order_copy)
+                population.append({"order": order_copy, "cost": cost})
+            self.bees_cnt = len(population)
+        else:
+            for _ in range(self.bees_cnt):
+                order = copy.copy(keys)
+                random.shuffle(order)
+                cost = self._evaluate_cost(order)
+                population.append({"order": order, "cost": cost})
+
+        population.sort(key=lambda x: x["cost"])
+        best_initial_cost = population[0]["cost"]
+        avg_initial_cost = sum(p["cost"] for p in population) / len(population)
+        best_initial_sol = solve_given_order(self.problem, population[0]["order"])
+        self.history.append((best_initial_cost, avg_initial_cost, best_initial_sol))
+        if verbose:
+            print(f"Iteration 000 (initial) | Best cost: {best_initial_cost}")
 
         for gen in range(iterations):
             population.sort(key=lambda x: x["cost"])

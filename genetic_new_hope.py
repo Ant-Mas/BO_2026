@@ -16,12 +16,6 @@ class GeneticSolver:
         self.history: list[tuple[int, float, Solution]] = []
 
 
-    def create_initial_population(self):
-        keys = self.problem.situations.keys()
-        for _ in range(self.population_size):
-            order = list(keys)
-            random.shuffle(order)
-            self.population.append(order)
 
 
     def mutate(self, solution: list[int]):
@@ -89,12 +83,14 @@ class GeneticSolver:
         return child
 
 
-    def evolve(self, generations: int, save_history: bool = True, verbose: bool = False) -> Solution:
+    def evolve(self, generations: int, initial_population: list[list[int]] | None = None, save_history: bool = True, verbose: bool = False) -> Solution:
         """
         Run the genetic evolution for this genetic solver
 
         :param generations: For how many generations the solver will run
         :type generation: int
+        :param initial_population: Starting population (list of orders). If None, generates randomly.
+        :type initial_population: list[list[int]] | None
         :param save_history: If true saves best, avg cost and best solution to history parameter in each generation
         :type save_history: bool
         :param verbose: If true prints best and avg cost for each generation
@@ -103,11 +99,32 @@ class GeneticSolver:
         :returns: The best found solution
         :rtype: Solution
         """
-        self.create_initial_population()
+        if initial_population is not None:
+            self.population = [copy.deepcopy(order) for order in initial_population]
+            self.population_size = len(self.population)
+        else:
+            keys = list(self.problem.situations.keys())
+            for _ in range(self.population_size):
+                order = list(keys)
+                random.shuffle(order)
+                self.population.append(order)
         costs = [inf] * self.population_size
         if self.elitism is None:
             self.elitism = (len(self.population) + 9) // 10
-        
+
+        # Evaluate initial population (generation 0)
+        for i, sol in enumerate(self.population):
+            paths = solve_given_order(self.problem, sol)
+            paths.calculate_cost_function()
+            costs[i] = paths.get_cost()
+        sorted_pop = sorted(zip(costs, self.population))
+        self.population = [sol for cost, sol in sorted_pop]
+        best_cost_0 = sorted_pop[0][0]
+        avg_cost_0 = sum(cost for cost, sol in sorted_pop) / self.population_size
+        if verbose: print(f"Generation 0: {best_cost_0 = }, {avg_cost_0 = }")
+        if save_history:
+            self.history.append((best_cost_0, avg_cost_0, solve_given_order(self.problem, self.population[0])))
+
         for gen in range(generations):
             for i, sol in enumerate(self.population):
                 paths = solve_given_order(self.problem, sol)
