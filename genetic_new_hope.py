@@ -15,9 +15,6 @@ class GeneticSolver:
         self.population: list[list[int]] = []
         self.history: list[tuple[int, float, Solution]] = []
 
-
-
-
     def mutate(self, solution: list[int]):
         match self.mutate_mode:
             case "swap":
@@ -112,7 +109,6 @@ class GeneticSolver:
         if self.elitism is None:
             self.elitism = (len(self.population) + 9) // 10
 
-        # Evaluate initial population (generation 0)
         for i, sol in enumerate(self.population):
             paths = solve_given_order(self.problem, sol)
             paths.calculate_cost_function()
