@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algorithm Comparison – Genetic vs Bee</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--card:#181b23;--border:#2a2d3a;--accent:#6c63ff;--accent2:#f7931a;--text:#e4e4e7;--muted:#8b8fa3;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--orange:#f59e0b}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+h1{text-align:center;padding:24px 0 8px;font-size:1.6rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;}
+.subtitle{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:20px}
+
+.container{max-width:1400px;margin:0 auto;padding:0 16px 32px}
+.params-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.param-group{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.param-group h3{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.field{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.field label{font-size:.82rem;color:var(--text)}
+.field input{width:90px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.82rem;text-align:right}
+.btn-row{text-align:center;margin:16px 0}
+#runBtn{padding:10px 40px;font-size:1rem;border:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;cursor:pointer;font-weight:600;transition:transform .15s}
+#runBtn:hover{transform:scale(1.04)}
+#runBtn:disabled{opacity:.5;cursor:wait}
+#status{text-align:center;color:var(--muted);font-size:.85rem;min-height:20px;margin-bottom:8px}
+
+.results{display:none}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-card h3{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.stat-val{font-size:1.5rem;font-weight:700}
+.stat-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+.ga-color{color:var(--blue)} .ba-color{color:var(--orange)}
+
+.charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.chart-card h3{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;text-align:center}
+.chart-card canvas{width:100%!important;max-height:260px}
+
+/* Graphs stacked vertically, bigger */
+.graph-section{display:grid;grid-template-columns:1fr;gap:14px}
+.graph-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;position:relative}
+.graph-card h3{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;text-align:center}
+.graph-box{width:100%;height:600px;border-radius:8px;overflow:hidden;background:#12141c}
+
+.legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:10px 0;font-size:.78rem}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+@media(max-width:900px){.charts-row,.stats-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<h1>🐝 Bee vs 🧬 Genetic Algorithm</h1>
+<p class="subtitle">Vehicle routing optimisation — compare both solvers on the same city-like graph</p>
+
+<div class="container">
+  <div class="params-panel">
+    <div class="param-group">
+      <h3>🗺️ City Graph</h3>
+      <div class="field"><label>Grid rows</label><input id="grid_rows" type="number" value="6"></div>
+      <div class="field"><label>Grid cols</label><input id="grid_cols" type="number" value="8"></div>
+      <div class="field"><label>Min weight</label><input id="min_weight" type="number" value="1"></div>
+      <div class="field"><label>Max weight</label><input id="max_weight" type="number" value="10"></div>
+      <div class="field"><label>Situations</label><input id="num_situations" type="number" value="10"></div>
+      <div class="field"><label>Min cars</label><input id="min_car_amount" type="number" value="2"></div>
+      <div class="field"><label>Max cars</label><input id="max_car_amount" type="number" value="4"></div>
+      <div class="field"><label>Seed</label><input id="seed" type="number" value="42"></div>
+    </div>
+    <div class="param-group">
+      <h3>🧬 Genetic Algorithm</h3>
+      <div class="field"><label>Generations</label><input id="generations" type="number" value="40"></div>
+      <div class="field"><label>Population</label><input id="population_size" type="number" value="50"></div>
+      <div class="field"><label>Mutation rate</label><input id="mutation_rate" type="number" value="0.25" step="0.05"></div>
+    </div>
+    <div class="param-group">
+      <h3>🐝 Bee Algorithm</h3>
+      <div class="field"><label>Bees count</label><input id="bees_cnt" type="number" value="30"></div>
+      <div class="field"><label>Good+Elite</label><input id="good_elite_cnt" type="number" value="10"></div>
+      <div class="field"><label>Elite</label><input id="elite_cnt" type="number" value="3"></div>
+      <div class="field"><label>Local elite iter</label><input id="local_elite_cnt" type="number" value="10"></div>
+      <div class="field"><label>Local good iter</label><input id="local_good_cnt" type="number" value="4"></div>
+    </div>
+  </div>
+
+  <div class="btn-row"><button id="runBtn" onclick="runSolver()">Run Comparison</button></div>
+  <div id="status"></div>
+
+  <div class="results" id="results">
+    <div class="stats-row">
+      <div class="stat-card"><h3>🧬 Genetic Algorithm</h3><div class="stat-val ga-color" id="gaCost">—</div><div class="stat-sub" id="gaTime"></div><div class="stat-sub" id="gaCorrect"></div></div>
+      <div class="stat-card"><h3>🐝 Bee Algorithm</h3><div class="stat-val ba-color" id="baCost">—</div><div class="stat-sub" id="baTime"></div><div class="stat-sub" id="baCorrect"></div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card"><h3>Cost convergence</h3><canvas id="costChart"></canvas></div>
+      <div class="chart-card"><h3>Cost comparison</h3><canvas id="costBarChart"></canvas></div>
+      <div class="chart-card"><h3>Time comparison</h3><canvas id="timeBarChart"></canvas></div>
+    </div>
+
+    <div class="legend" id="pathLegend"></div>
+    <div class="graph-section">
+      <div class="graph-card"><h3>🧬 Genetic – paths</h3><div class="graph-box" id="gaGraph"></div></div>
+      <div class="graph-card"><h3>🐝 Bee – paths</h3><div class="graph-box" id="baGraph"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Ambulance = white, Fire = red, Police = blue
+const PATH_COLORS = {a:'#ffffff', f:'#ef4444', p:'#3b82f6'};
+const CAR_LABELS = {a:'Ambulance (a)', f:'Fire (f)', p:'Police (p)'};
+let costChart=null, costBarChart=null, timeBarChart=null;
+
+function val(id){return document.getElementById(id).value}
+
+async function runSolver(){
+  const btn=document.getElementById('runBtn');
+  const status=document.getElementById('status');
+  btn.disabled=true; status.textContent='Running solvers… this may take a moment.';
+  document.getElementById('results').style.display='none';
+
+  const body={};
+  ['grid_rows','grid_cols','min_weight','max_weight','num_situations','min_car_amount','max_car_amount','seed',
+   'generations','population_size','mutation_rate','bees_cnt','good_elite_cnt','elite_cnt','local_elite_cnt','local_good_cnt'
+  ].forEach(k=>body[k]=val(k));
+
+  try{
+    const res=await fetch('/api/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    if(!res.ok){status.textContent='Error: '+(d.error||'Unknown');btn.disabled=false;return;}
+    status.textContent='Done!';
+    renderResults(d);
+  }catch(e){status.textContent='Network error: '+e.message;}
+  btn.disabled=false;
+}
+
+function renderResults(d){
+  document.getElementById('results').style.display='block';
+  document.getElementById('gaCost').textContent=d.genetic.cost.toLocaleString();
+  document.getElementById('gaTime').textContent='Time: '+d.genetic.time+' s';
+  document.getElementById('gaCorrect').textContent='Correct: '+(d.genetic.is_correct?'✅ Yes':'❌ No');
+  document.getElementById('baCost').textContent=d.bee.cost.toLocaleString();
+  document.getElementById('baTime').textContent='Time: '+d.bee.time+' s';
+  document.getElementById('baCorrect').textContent='Correct: '+(d.bee.is_correct?'✅ Yes':'❌ No');
+
+  drawCostChart(d.genetic.history,d.bee.history);
+  drawCostBar(d);
+  drawTimeBar(d);
+  drawGraph('gaGraph',d.graph,d.genetic.paths);
+  drawGraph('baGraph',d.graph,d.bee.paths);
+  buildLegend();
+}
+
+/* --- Charts --- */
+
+const CHART_OPTS = {plugins:{legend:{labels:{color:'#e4e4e7',font:{size:11}}}},scales:{x:{ticks:{color:'#8b8fa3'},grid:{color:'#2a2d3a'}},y:{ticks:{color:'#8b8fa3'},grid:{color:'#2a2d3a'}}}};
+
+function drawCostChart(gaH,baH){
+  const ctx=document.getElementById('costChart').getContext('2d');
+  if(costChart)costChart.destroy();
+  const labels=gaH.map((_,i)=>i);
+  costChart=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'Genetic',data:gaH,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.3,pointRadius:1,fill:true},
+    {label:'Bee',data:baH,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.3,pointRadius:1,fill:true}
+  ]},options:{responsive:true,...CHART_OPTS,scales:{...CHART_OPTS.scales,x:{...CHART_OPTS.scales.x,title:{display:true,text:'Generation',color:'#8b8fa3'}},y:{...CHART_OPTS.scales.y,title:{display:true,text:'Cost',color:'#8b8fa3'}}}}});
+}
+
+function drawCostBar(d){
+  const ctx=document.getElementById('costBarChart').getContext('2d');
+  if(costBarChart)costBarChart.destroy();
+  costBarChart=new Chart(ctx,{type:'bar',data:{labels:['Genetic','Bee'],datasets:[{label:'Cost',data:[d.genetic.cost,d.bee.cost],backgroundColor:['rgba(59,130,246,.7)','rgba(245,158,11,.7)'],borderColor:['#3b82f6','#f59e0b'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#e4e4e7'},grid:{color:'#2a2d3a'}},y:{ticks:{color:'#8b8fa3'},grid:{color:'#2a2d3a'},title:{display:true,text:'Cost',color:'#8b8fa3'}}}}});
+}
+
+function drawTimeBar(d){
+  const ctx=document.getElementById('timeBarChart').getContext('2d');
+  if(timeBarChart)timeBarChart.destroy();
+  timeBarChart=new Chart(ctx,{type:'bar',data:{labels:['Genetic','Bee'],datasets:[{label:'Time (s)',data:[d.genetic.time,d.bee.time],backgroundColor:['rgba(59,130,246,.7)','rgba(245,158,11,.7)'],borderColor:['#3b82f6','#f59e0b'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#e4e4e7'},grid:{color:'#2a2d3a'}},y:{ticks:{color:'#8b8fa3'},grid:{color:'#2a2d3a'},title:{display:true,text:'Seconds',color:'#8b8fa3'}}}}});
+}
+
+/* --- Legend --- */
+
+function buildLegend(){
+  const el=document.getElementById('pathLegend');
+  el.innerHTML='<span style="color:var(--muted)">Path colours:</span>';
+  for(const[k,c]of Object.entries(PATH_COLORS))
+    el.innerHTML+=`<span><span class="dot" style="background:${c}${k==='a'?';border:1px solid #888':''}"></span>${CAR_LABELS[k]}</span>`;
+  el.innerHTML+='<span><span class="dot" style="background:#f97316"></span>Situation</span>';
+  el.innerHTML+='<span><span class="dot" style="background:#a78bfa"></span>Start</span>';
+}
+
+/* --- Graph drawing --- */
+
+function drawGraph(containerId, graph, paths){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  const NODE_SIZE = 8;
+  const nodeColors = {
+    normal:    {bg:'#374151', brd:'#6b7280'},
+    situation: {bg:'#f97316', brd:'#fb923c'},
+    start:     {bg:'#a78bfa', brd:'#c4b5fd'}
+  };
+
+  const visNodes = new vis.DataSet(graph.nodes.map(n => {
+    const c = nodeColors[n.group];
+    return {
+      id: n.id, label: n.label, x: n.x, y: n.y, fixed: true,
+      color: {background:c.bg, border:c.brd, highlight:{background:c.brd, border:'#fff'}},
+      font: {color:'#fff', size:9}, shape:'dot', size:NODE_SIZE, borderWidth:1.5
+    };
+  }));
+
+  const visEdges = [];
+  let eid = 0;
+
+  // Base street edges
+  graph.edges.forEach(e => {
+    visEdges.push({
+      id: eid++, from: e.from, to: e.to, label: String(e.weight),
+      color: {color:'#3f4455', highlight:'#6b7280'},
+      font: {color:'#6b7280', size:7},
+      width: 1, smooth: false
+    });
+  });
+
+  // Path edges — deduplicate per car type
+  for(const [car, carPaths] of Object.entries(paths)){
+    const color = PATH_COLORS[car] || '#fff';
+    const seenEdges = new Set();
+
+    carPaths.forEach((p, pi) => {
+      for(let i = 0; i < p.length - 1; i++){
+        // Deduplicate: only draw the first occurrence of each undirected edge per car type
+        const u = Math.min(p[i], p[i+1]);
+        const v = Math.max(p[i], p[i+1]);
+        const edgeKey = u + '-' + v;
+        if(seenEdges.has(edgeKey)) continue;
+        seenEdges.add(edgeKey);
+
+        visEdges.push({
+          id: eid++, from: p[i], to: p[i+1],
+          color: {color, highlight: color}, width: 2.5,
+          smooth: {type:'curvedCW', roundness: 0.12 + pi * 0.08},
+          arrows: 'to', dashes: false
+        });
+      }
+    });
+  }
+
+  const edgesDS = new vis.DataSet(visEdges);
+
+  const network = new vis.Network(container, {nodes: visNodes, edges: edgesDS}, {
+    physics: {enabled: false},
+    interaction: {hover: true, tooltipDelay: 100, zoomView: true, dragView: true},
+    edges: {font: {align: 'top'}}
+  });
+
+  // Manually zoom/pan so the graph fills the ENTIRE container
+  setTimeout(() => {
+    // Get bounding box of all nodes
+    const xs = graph.nodes.map(n => n.x);
+    const ys = graph.nodes.map(n => n.y);
+    const gMinX = Math.min(...xs), gMaxX = Math.max(...xs);
+    const gMinY = Math.min(...ys), gMaxY = Math.max(...ys);
+    const gW = gMaxX - gMinX || 1;
+    const gH = gMaxY - gMinY || 1;
+
+    const cW = container.clientWidth;
+    const cH = container.clientHeight;
+    const pad = 40; // px padding on each side
+
+    // Scale to fit BOTH dimensions (use the smaller scale)
+    const scaleX = (cW - 2 * pad) / gW;
+    const scaleY = (cH - 2 * pad) / gH;
+    const scale = Math.min(scaleX, scaleY);
+
+    const centerX = (gMinX + gMaxX) / 2;
+    const centerY = (gMinY + gMaxY) / 2;
+
+    network.moveTo({position: {x: centerX, y: centerY}, scale: scale, animation: false});
+  }, 150);
+}
+</script>
+</body>
+</html>
