@@ -66,10 +66,8 @@ def generate_random_graph(num_vertices: int, num_edges: int, min_weight: int, ma
 
     graph = [{} for _ in range(num_vertices)]
 
-    # Step 1: Create a random spanning tree (guarantees connectivity)
     vertices = list(range(num_vertices))
     random.shuffle(vertices)
-
     used_edges = set()
 
     for i in range(1, num_vertices):
@@ -82,11 +80,9 @@ def generate_random_graph(num_vertices: int, num_edges: int, min_weight: int, ma
         graph[v][u] = weight
         used_edges.add(edge)
 
-    # Step 2: Generate all remaining possible edges
     all_edges = list(combinations(range(num_vertices), 2))
     remaining_edges = [e for e in all_edges if e not in used_edges]
 
-    # Shuffle once and pick needed edges
     random.shuffle(remaining_edges)
     needed = num_edges - len(used_edges)
 
@@ -99,7 +95,6 @@ def generate_random_graph(num_vertices: int, num_edges: int, min_weight: int, ma
 
 
 def _is_connected(graph: Graph, n: int) -> bool:
-    """BFS connectivity check."""
     if n == 0:
         return True
     visited = set()
@@ -122,24 +117,14 @@ def generate_city_graph(
         remove_pct: float = 0.15,
         diagonal_pct: float = 0.12,
 ) -> tuple[Graph, dict[int, tuple[float, float]]]:
-    """
-    Generate a city-like graph:
-    1. Start with a full rows×cols grid (all horizontal + vertical edges).
-    2. Remove a fraction of edges while keeping the graph connected.
-    3. Add a fraction of diagonal shortcut edges.
-    4. Compute positions where visual distance ∝ edge weight.
-
-    :returns: (adjacency list graph, {node_id: (x, y)} positions)
-    """
     n = rows * cols
     graph: Graph = [{} for _ in range(n)]
 
     def nid(r: int, c: int) -> int:
         return r * cols + c
 
-    # ---------- Step 1: full grid ----------
-    h_weights: dict[tuple[int, int], int] = {}  # (r,c) -> weight of edge (r,c)-(r,c+1)
-    v_weights: dict[tuple[int, int], int] = {}  # (r,c) -> weight of edge (r,c)-(r+1,c)
+    h_weights: dict[tuple[int, int], int] = {}  
+    v_weights: dict[tuple[int, int], int] = {}  
 
     for r in range(rows):
         for c in range(cols - 1):
@@ -157,7 +142,6 @@ def generate_city_graph(
             graph[v][u] = w
             v_weights[(r, c)] = w
 
-    # ---------- Step 2: remove some edges ----------
     removable = []
     for r in range(rows):
         for c in range(cols - 1):
@@ -192,7 +176,6 @@ def generate_city_graph(
             graph[u][v] = w
             graph[v][u] = w
 
-    # ---------- Step 3: diagonal shortcuts ----------
     diagonals = []
     for r in range(rows - 1):
         for c in range(cols):
@@ -208,17 +191,13 @@ def generate_city_graph(
             graph[u][v] = w
             graph[v][u] = w
 
-    # ---------- Step 4: zigzag grid positions ----------
-    # Computes coordinates where individual horizontal/vertical street lengths are proportional to their weights.
     positions: dict[int, tuple[float, float]] = {}
 
-    # Calculate average weights for fallback (when edges are deleted)
     h_vals = list(h_weights.values())
     avg_h = sum(h_vals) / len(h_vals) if h_vals else (min_weight + max_weight) / 2
     v_vals = list(v_weights.values())
     avg_v = sum(v_vals) / len(v_vals) if v_vals else (min_weight + max_weight) / 2
 
-    # Calculate X positions row-by-row
     row_xs = []
     for r in range(rows):
         xs = [0.0] * cols
@@ -227,7 +206,6 @@ def generate_city_graph(
             xs[c] = xs[c - 1] + w
         row_xs.append(xs)
 
-    # Calculate Y positions col-by-col
     col_ys = []
     for c in range(cols):
         ys = [0.0] * rows
@@ -254,14 +232,12 @@ def generate_grid_graph(side: int, min_weight: int, max_weight: int) -> Graph:
         for c in range(side):
             u = node_id(r, c)
 
-            # Connect to the right neighbor
             if c + 1 < side:
                 v = node_id(r, c + 1)
                 w = random.randint(min_weight, max_weight)
                 graph[u][v] = w
                 graph[v][u] = w
-
-                # Connect to the bottom neighbor
+                
             if r + 1 < side:
                 v = node_id(r + 1, c)
                 w = random.randint(min_weight, max_weight)

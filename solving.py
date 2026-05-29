@@ -50,6 +50,7 @@ def solve_random_order(problem: Problem, seed = 2137):
     random.shuffle(order)
     return solve_given_order(problem, order)
 
+
 def solve_given_order(problem: Problem, order:list[int]) -> Solution:
     cars_a = [(problem.starting_positions['a'], 0, [(problem.starting_positions['a'], 0)]) for _ in range(problem.car_amounts['a'])]
     cars_f = [(problem.starting_positions['f'], 0, [(problem.starting_positions['f'], 0)]) for _ in range(problem.car_amounts['f'])]
