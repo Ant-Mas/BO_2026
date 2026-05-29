@@ -284,3 +284,43 @@ class Solution:
         if self.cost_values is None:
             raise RuntimeError("Cost values not calculated yet, call calculate_cost_function() first")
         return sum(cost**2 for cost in self.cost_values.values())
+    
+
+    def display(self) -> None:
+        print("=" * 60)
+        print("SOLUTION")
+        print("=" * 60)
+
+        print("Problem:")
+        print(f"  Graph: {self.problem.graph}")
+
+        print("Situations:")
+        for node, situations in sorted(self.problem.situations.items()):
+            print(f"    {node}: {sorted(situations)}")
+
+        print("Car Amounts:")
+        for car_type, amount in self.problem.car_amounts.items():
+            print(f"    {car_type}: {amount}")
+
+        print("Starting Positions:")
+        for car_type, pos in self.problem.starting_positions.items():
+            print(f"    {car_type}: {pos}")
+
+        print("Paths:")
+        for vehicle, vehicle_paths in self.paths.items():
+            print(f"  {vehicle}:")
+
+            for idx, path in enumerate(vehicle_paths, start=1):
+                formatted_path = " -> ".join(
+                    f"({u}, {v})" for u, v in path
+                )
+                print(f"    Path {idx}: {formatted_path}")
+
+        if self.cost_values is not None:
+            print("Cost Values:")
+            for key, value in sorted(self.cost_values.items()):
+                print(f"    {key}: {value}")
+
+        print(f"TOTAL COST VALUE: {self.get_cost()}")
+
+        print("=" * 60)

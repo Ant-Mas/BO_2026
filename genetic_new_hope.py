@@ -158,7 +158,7 @@ class GeneticSolver:
     
 
 def main():
-    problem = Problem.random(60, 400, 1, 10, 20, 2, 5, seed=213)
+    problem = Problem.random(10, 30, 1, 10, 4, 1, 2, seed=213)
     print(f"{problem.check_validity(True) = }")
 
     solver = GeneticSolver(problem, population_size=17, mutation_rate=0.25)
@@ -169,6 +169,8 @@ def main():
     print(f"{solution.cost_values = }")
     print(f"{solution.is_correct() = }")
     print(f"{solution.get_cost() = }")
+
+    solution.display()
 
 def man_made_horrors():
     graph = [{2:30, 3:30}, {4:30, 5:30}, {0:30, 6:6, 7:9}, {0:30, 6:7, 7:21}, {1:30, 6:6, 7:8}, {1:30, 6:23, 7:9}, {2:6,3:7,4:6,5:23}, {2:9,3:21,4:8,5:9}]
@@ -184,6 +186,7 @@ def man_made_horrors():
     print(f"{solution.is_correct() = }")
     print(f"{solution.get_cost() = }")
 
+
     # print(f"{man_made_solution.makes_sense(verbose=True) = }")
     # man_made_solution.calculate_cost_function(verbose=True)
     # print(f"{man_made_solution.cost_values = }")
@@ -194,4 +197,4 @@ def man_made_horrors():
 
 if __name__ == "__main__":
     man_made_horrors()
-    # main()
+    main()
