@@ -3,7 +3,6 @@ from math import inf
 from collections.abc import Iterable
 import random
 from itertools import combinations
-import networkx as nx
 
 Graph = list[dict[int, int]]
 
