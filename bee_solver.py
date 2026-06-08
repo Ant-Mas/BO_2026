@@ -2,6 +2,7 @@ import random
 import copy
 from problem_solution import Solution, Problem
 from solving import solve_given_order
+from time import time
 
 
 def get_neighborhood(order: list[int], intensity: int = 1) -> list[int]:
@@ -48,7 +49,8 @@ class BeeSolver:
         solution.calculate_cost_function()
         return solution.get_cost()
 
-    def evolve(self, iterations: int, initial_population: list[list[int]] | None = None, verbose: bool = False) -> Solution:
+    def evolve(self, iterations: int, initial_population: list[list[int]] | None = None, verbose: bool = False, timeout_seconds:int = 500) -> Solution:
+        start_time = time()
         # Inicjalizacja populacji
         keys = list(self.problem.situations.keys())
         population = []
@@ -117,6 +119,9 @@ class BeeSolver:
 
             best_sol_object = solve_given_order(self.problem, population[0]["order"])
             self.history.append((best_current_cost, avg_cost, best_sol_object))
+
+            if (time() - start_time) >= timeout_seconds:
+                break
 
         best_overall_order = population[0]["order"]
         final_solution = solve_given_order(self.problem, best_overall_order)

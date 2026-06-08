@@ -3,6 +3,7 @@ from problem_solution import Solution, Problem, CARS
 import random
 from solving import solve_given_order
 from math import inf
+from time import time
 
 class GeneticSolver:
     def __init__(self, problem: Problem, population_size: int = 50, mutation_rate: float = 0.5, elitism: int | None = None, mutate_mode: str = "swap", crossover_mode: str = "keep_splice"):
@@ -80,7 +81,7 @@ class GeneticSolver:
         return child
 
 
-    def evolve(self, generations: int, initial_population: list[list[int]] | None = None, save_history: bool = True, verbose: bool = False) -> Solution:
+    def evolve(self, generations: int, initial_population: list[list[int]] | None = None, save_history: bool = True, timeout_seconds: int = inf, verbose: bool = False) -> Solution:
         """
         Run the genetic evolution for this genetic solver
 
@@ -96,6 +97,8 @@ class GeneticSolver:
         :returns: The best found solution
         :rtype: Solution
         """
+        start_time = time()
+
         if initial_population is not None:
             self.population = [copy.deepcopy(order) for order in initial_population]
             self.population_size = len(self.population)
@@ -148,6 +151,9 @@ class GeneticSolver:
                 new_population.append(child)
 
             self.population = new_population
+
+            if (time() - start_time) >= timeout_seconds:
+                break
 
         return solve_given_order(self.problem, self.population[0])
     
